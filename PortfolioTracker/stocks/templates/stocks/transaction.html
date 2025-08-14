@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %} Transactions {% endblock %}
+
+{% block content %}
+<h2>Transaction</h2>
+
+<form method="POST">
+    {% csrf_token %}
+    {{ form }}
+    <button type="submit" class="btn btn-primary">
+        Confirm
+    </button>   
+</form>
+
+<br>
+<br>
+<a href="{% url 'portfolio-details' portfolio.id %}">Back to Portfolios Details</a>
+{% endblock %}

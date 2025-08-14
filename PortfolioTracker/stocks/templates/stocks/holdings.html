@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Holdings{% endblock %}
+
+{% block content %}
+
+<h2>Holdings</h2>
+
+    <div style="max-width: 500px;margin: 0 auto;">
+        <canvas id="holdingsChart"></canvas>
+        {{ chart_labels|json_script:"chart-labels" }}
+        {{ chart_values|json_script:"chart-values" }}
+    </div>
+
+
+<a href="{% url 'portfolio-details' portfolio.id %}">Back to Portfolios Details</a>
+{% endblock %}

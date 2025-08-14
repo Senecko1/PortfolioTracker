@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Portfolios{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+    <h2>Welcome, {{ user.username }}!</h2>
+    <p>This is your dashboard. Here you can see your portfolios:</p>
+
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <ol class="portfolio-list">
+        {% for portfolio in portfolios %}
+            <li>
+                <a href="{% url 'portfolio-details' portfolio.id %}">
+                    {{ portfolio.name }}
+                </a>
+            </li>
+        
+        {% empty %}
+            <li>You have no portfolios yet.</li>
+        {% endfor %}
+    </ol>
+
+    <button type="button" class="btn btn-primary open-modal-btn" data-target="portfolioModal">Create Portfolio</button>
+    <button type="button" class="btn btn-primary open-modal-btn" data-target="stockModal">Add Stock</button>
+
+
+    <div id="portfolioModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close modal-close">&times;</span>
+            <h2>Create Portfolio</h2>
+            <form method="post" action="{% url 'user-portfolios' %}">
+                {% csrf_token %}
+                {{ portfolio_form.as_p }}
+                <button type="submit">Create</button>
+            </form>
+        </div>
+    </div>
+
+<div id="stockModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <span class="close modal-close">&times;</span>
+        <h2>Add Stock</h2>
+        <form method="post" action="{% url 'add-stock' %}">
+            {% csrf_token %}
+            
+            <label for="stock-symbol-input">Stock ticker:</label><br>
+            <select id="stock-symbol-input" name="ticker" style="width:100%;">
+                <option value=""></option>
+            </select>
+            
+            <br><br>
+            
+            <label for="stock-tags-input">Tags:</label><br>
+            <select id="stock-tags-input" name="tags" multiple="multiple" style="width:100%;">
+                {% for tag in tags_list %}
+                    <option value="{{ tag.id }}">{{ tag.name }}</option>
+                {% endfor %}
+            </select>
+            
+            <br><br>
+            
+            <button type="submit">Add Stock</button>
+        </form>
+    </div>
+</div>
+
+
+
+    <form method="post" action="{% url 'logout' %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">Log Out</button>
+    </form>
+
+{% else %}
+    <h2>Welcome to the Portfolio Tracker!</h2>
+    <p>
+        Please 
+        <a href="{% url 'login' %}">log in</a> 
+        or 
+        <a href="{% url 'register' %}">register</a> 
+        to start tracking your investments.
+    </p>
+{% endif %}
+{% endblock %}

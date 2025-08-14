@@ -1,0 +1,42 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Portfolio Tracker{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v={% now 'U' %}">
+    <link rel="stylesheet" href="{% static 'css/select2.min.css' %}?v={% now 'U' %}">
+
+
+</head>
+
+<body>
+    <header>
+        {% if user.is_authenticated and portfolio_id %}
+            <nav>
+                <a href="{% url 'all-transactions' portfolio_id %}">All Transactions</a> |
+                <a href="{% url 'holdings' portfolio_id %}">Holdings</a>
+            </nav>
+        {% endif %}
+    </header>
+
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        {% block footer %}
+            <p>&copy; 2025 Portfolio tracker | Jakub Sláma &#127936;</p>
+        {% endblock %}
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{% static 'js/select2.min.js' %}"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

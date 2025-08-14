@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}All Transactions{% endblock %}
+
+
+{% block content %}
+<h2>All transactions for Portfolio {{ portfolio.name }}</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Stock</th>
+            <th>Shares</th>
+            <th>Price</th>
+            <th>Fees</th>
+            <th>Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for transaction in transactions %}
+        <tr>
+            <td>{{ transaction.transaction_date|date:"d.m.Y" }}</td>
+            <td>{{ transaction.transaction_type }}</td>
+            <td>{{ transaction.stock }}</td>
+            <td>{{ transaction.quantity }}</td>
+            <td>{{ transaction.price }}</td>
+            <td>{{ stock.currency}} {{ transaction.fees }}</td>
+            <td>{{ transaction.notes }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7">No transactions yet.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<br>
+<br>
+<a href="{% url 'portfolio-details' portfolio.id %}">Back to Portfolios Details</a>
+{% endblock %}

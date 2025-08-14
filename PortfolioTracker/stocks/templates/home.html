@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="welcome">
+    <h2>Welcome to the Portfolio Tracker!</h2>
+    <p>
+        Please 
+        <a href="{% url 'login' %}">log in</a>
+        or
+        <a href="{% url 'register' %}">register</a>
+        to start tracking your investments.
+    </p>
+</section>
+{% endblock %}
