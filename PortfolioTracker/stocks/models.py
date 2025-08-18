@@ -28,6 +28,7 @@ class Stock(models.Model):
     class Meta:
         verbose_name = 'Stock'
         verbose_name_plural = 'Stocks'
+        ordering = ['ticker']
 
     def __str__(self):
         return f"{self.ticker} ({self.name})" if self.name else self.ticker
@@ -63,7 +64,7 @@ class Portfolio(models.Model):
         holdings = Holding.objects.filter(portfolio=self).select_related('stock')
         holdings_with_prices = []
         cutoff = timezone.now() - timedelta(minutes=15)
-        
+
         for holding in holdings:
             stock = holding.stock
             if not stock.last_price or stock.last_update < cutoff:
@@ -77,7 +78,7 @@ class Portfolio(models.Model):
                     'current_value': None,
                     'currency': None,
                     'gain_loss': None,
-                    'gain_loss_percent': None
+                    'gain_loss_percent': None,
                 })
                 continue
 
@@ -92,10 +93,33 @@ class Portfolio(models.Model):
                 'current_value': round(current_value, 2),
                 'currency': stock.currency,
                 'gain_loss': round(gain_loss, 2),
-                'gain_loss_percent': round(gain_loss_percent, 2)
+                'gain_loss_percent': round(gain_loss_percent, 2),
             })
 
         return holdings_with_prices
+
+    def get_portfolio_summary(self):
+        holdings_with_prices = self.get_holdings_with_prices()
+
+        total_value = 0
+        total_cost = 0
+
+        for item in holdings_with_prices:
+            if item['current_value'] is not None:
+                total_value += item['current_value']
+            if item['holding'].buy_price and item['holding'].quantity:
+                total_cost += item['holding'].quantity * float(item['holding'].buy_price)
+
+        gain_loss = total_value - total_cost
+        gain_loss_percent = (gain_loss / total_cost * 100) if total_cost else 0
+
+        return {
+            'total_value': round(total_value, 2),
+            'total_cost': round(total_cost, 2),
+            'gain_loss': round(gain_loss, 2),
+            'gain_loss_percent': round(gain_loss_percent, 2),
+        }
+
 
 
 class Holding(models.Model):
@@ -107,15 +131,13 @@ class Holding(models.Model):
 
     class Meta:
         unique_together = [('portfolio', 'stock')]
+        ordering = ['stock__ticker']
 
     def __str__(self):
         return f"{self.quantity} × {self.stock.ticker}"
 
     def current_value(self, current_price):
         return self.quantity * current_price
-
-    def average_price(self):
-        return self.buy_price
 
 
 class Transaction(models.Model):

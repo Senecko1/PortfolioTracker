@@ -74,6 +74,7 @@ class PortfolioDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['holdings_with_prices'] = self.object.get_holdings_with_prices()
+        context['summary'] = self.object.get_portfolio_summary()
         context['transactions'] = Transaction.objects.filter(portfolio=self.object)
         context['portfolio_id'] = self.object.id
         return context

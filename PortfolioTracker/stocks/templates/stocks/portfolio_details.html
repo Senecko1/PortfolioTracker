@@ -77,6 +77,31 @@
         </tbody>
     </table>
 
+    <h3>Portfolio Summary:</h3>
+<table class="table">
+    <tr>
+        <th>Total Cost</th>
+        <td>{{ summary.total_cost }}</td>
+    </tr>
+    <tr>
+        <th>Total Value</th>
+        <td>{{ summary.total_value }}</td>
+    </tr>
+    <tr>
+        <th>Gain/Loss</th>
+        <td class="{% if summary.gain_loss > 0 %}gain-positive{% elif summary.gain_loss < 0 %}gain-negative{% else %}gain-neutral{% endif %}">
+            {{ summary.gain_loss }}
+        </td>
+    </tr>
+    <tr>
+        <th>Gain/Loss %</th>
+        <td class="{% if summary.gain_loss_percent > 0 %}gain-positive{% elif summary.gain_loss_percent < 0 %}gain-negative{% else %}gain-neutral{% endif %}">
+            {{ summary.gain_loss_percent }}%
+        </td>
+    </tr>
+</table>
+
+
     <form method="get" action="{% url 'transaction' portfolio.id %}" style="display:inline-block;">
     <button type="submit" class="btn btn-primary">Transaction</button>
 </form>
