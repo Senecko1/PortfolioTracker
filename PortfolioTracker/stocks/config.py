@@ -1,5 +1,3 @@
-# config.py
-
 CURRENCY_SYMBOLS = {
     'USD': '$',   # US Dollar
     'EUR': '€',   # Euro

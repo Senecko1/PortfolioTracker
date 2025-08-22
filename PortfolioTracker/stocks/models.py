@@ -4,7 +4,7 @@ from django.core.validators import MinValueValidator
 from django.utils import timezone
 from datetime import timedelta
 import yfinance as yf
-
+from .config import TRANSACTION_TYPES, PRICE_REFRESH_DELTA_MINUTES
 
 class Tag(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -63,7 +63,7 @@ class Portfolio(models.Model):
     def get_holdings_with_prices(self):
         holdings = Holding.objects.filter(portfolio=self).select_related('stock')
         holdings_with_prices = []
-        cutoff = timezone.now() - timedelta(minutes=15)
+        cutoff = timezone.now() - timedelta(minutes=PRICE_REFRESH_DELTA_MINUTES)
 
         for holding in holdings:
             stock = holding.stock
@@ -141,10 +141,7 @@ class Holding(models.Model):
 
 
 class Transaction(models.Model):
-    TRANSACTION_TYPES = (
-    ('BUY', 'Buy'),
-    ('SELL', 'Sell'),
-)
+    TRANSACTION_TYPES = TRANSACTION_TYPES
 
     portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE)
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE)

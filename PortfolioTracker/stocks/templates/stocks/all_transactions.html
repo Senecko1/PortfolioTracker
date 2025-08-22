@@ -21,7 +21,7 @@
     <tbody>
         {% for transaction in transactions %}
         <tr>
-            <td>{{ transaction.transaction_date|date:"d.m.Y" }}</td>
+            <td>{{ transaction.transaction_date|date:DATE_FORMAT_DISPLAY }}</td>
             <td>{{ transaction.transaction_type }}</td>
             <td>{{ transaction.stock }}</td>
             <td>{{ transaction.quantity }}</td>

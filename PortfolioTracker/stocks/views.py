@@ -16,6 +16,7 @@ from django.views.generic import (
 )
 
 import yfinance as yf
+from .config import CURRENCY_SYMBOLS, DATE_FORMAT_DISPLAY
 from .forms import PortfolioForm, TransactionForm
 from .models import Portfolio, Stock, Holding, Transaction, Tag
 
@@ -101,14 +102,8 @@ class AddStockView(LoginRequiredMixin, View):
                 yf_stock = yf.Ticker(ticker)
                 info = yf_stock.info
                 stock.name = info.get('shortName', '')[:100]
-                currency_symbols = {
-                    'USD': '$',
-                    'EUR': '€',
-                    'GBP': '£',
-                    'CZK': 'Kč',
-                }
                 currency = info.get('currency', '')
-                stock.currency = currency_symbols.get(currency, currency)
+                stock.currency = CURRENCY_SYMBOLS.get(currency, currency)
 
                 stock.last_price = info.get('currentPrice', 0)
                 stock.save()
@@ -212,6 +207,7 @@ class AllTransactionsView(LoginRequiredMixin, ListView):
         portfolio = Portfolio.objects.get(pk=self.kwargs['portfolio_id'])
         context['portfolio'] = portfolio
         context['portfolio_id'] = portfolio.id
+        context["DATE_FORMAT_DISPLAY"] = DATE_FORMAT_DISPLAY
         return context
 
 
