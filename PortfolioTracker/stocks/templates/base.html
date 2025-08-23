@@ -16,7 +16,8 @@
         {% if user.is_authenticated and portfolio_id %}
             <nav>
                 <a href="{% url 'all-transactions' portfolio_id %}">All Transactions</a> |
-                <a href="{% url 'holdings' portfolio_id %}">Holdings</a>
+                <a href="{% url 'holdings' portfolio_id %}">Holdings</a> |
+                <a href="{% url 'line-chart' portfolio_id %}">Line Chart</a>
             </nav>
         {% endif %}
     </header>
@@ -34,10 +35,11 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{% static 'js/select2.min.js' %}"></script>
     <script src="{% static 'js/main.js' %}"></script>
     <script src="{% static 'js/doughnut_chart.js' %}"></script>
+    <script src="{% static 'js/line_chart.js' %}"></script>
 </body>
 </html>

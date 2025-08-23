@@ -3,8 +3,12 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from django.utils import timezone
 from datetime import timedelta
+import pandas as pd
 import yfinance as yf
-from .config import TRANSACTION_TYPES, PRICE_REFRESH_DELTA_MINUTES
+from .config import (
+    TRANSACTION_TYPES,
+    PRICE_REFRESH_DELTA_MINUTES,
+)
 
 class Tag(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -120,6 +124,60 @@ class Portfolio(models.Model):
             'gain_loss_percent': round(gain_loss_percent, 2),
         }
 
+    def get_time_series(self, days=365):
+        end_date = timezone.now().date()
+        start_date = end_date - timedelta(days=days)
+
+        all_transactions = (
+            Transaction.objects
+            .filter(portfolio=self, transaction_date__lte=end_date)
+            .order_by('transaction_date', 'timestamp')
+        )
+        if not all_transactions.exists():
+            return {'labels': [], 'values': []}
+
+        ticker_transaction_changes = {}
+        for transaction in all_transactions:
+            ticker_changes = ticker_transaction_changes.setdefault(transaction.stock.ticker, [])
+            quantity_change = transaction.quantity if transaction.transaction_type == 'BUY' else -transaction.quantity
+            ticker_changes.append((transaction.transaction_date, quantity_change))
+
+        ticker_list = list(ticker_transaction_changes.keys())
+        price_data_frame = yf.download(
+            tickers=ticker_list,
+            start=start_date.isoformat(),
+            end=(end_date + timedelta(days=1)).isoformat(),
+            progress=False,
+            group_by='ticker'
+        )
+        if price_data_frame.empty:
+            return {'labels': [], 'values': []}
+
+        holdings_data_frame = pd.DataFrame(index=price_data_frame.index)
+
+        for ticker, transactions_for_ticker in ticker_transaction_changes.items():
+            initial_quantity = sum(change for date, change in transactions_for_ticker if date < start_date)
+            relevant_events = sorted([(date, change) for date, change in transactions_for_ticker if start_date <= date <= end_date])
+
+            current_quantity = initial_quantity
+            daily_quantities = []
+            event_index = 0
+            for current_date in price_data_frame.index.normalize():
+                while event_index < len(relevant_events) and relevant_events[event_index][0] == current_date.date():
+                    current_quantity += relevant_events[event_index][1]
+                    event_index += 1
+                daily_quantities.append(current_quantity)
+            holdings_data_frame[ticker] = pd.Series(daily_quantities, index=price_data_frame.index)
+
+        portfolio_value_series = pd.Series(0.0, index=price_data_frame.index)
+        for ticker in ticker_list:
+            close_prices = price_data_frame[ticker]['Close'] if len(ticker_list) > 1 else price_data_frame['Close']
+            portfolio_value_series += holdings_data_frame[ticker].astype(float) * close_prices.astype(float)
+
+        labels = [date.date().isoformat() for date in portfolio_value_series.index]
+        values = [round(value, 2) for value in portfolio_value_series.values]
+
+        return {'labels': labels, 'values': values}
 
 
 class Holding(models.Model):

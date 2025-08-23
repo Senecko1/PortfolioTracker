@@ -7,6 +7,7 @@ from django.db import IntegrityError
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views import View
 from django.views.generic import (
     CreateView,
@@ -246,9 +247,25 @@ class HoldingsView(LoginRequiredMixin, ListView):
         return context
 
 
+class PortfolioChartData(LoginRequiredMixin, View):
+    def get(self, request, portfolio_id):
+        portfolio = get_object_or_404(Portfolio, pk=portfolio_id, user=request.user)
+        data = portfolio.get_time_series(days=365)
+        return JsonResponse(data)
 
 
+class LineChartView(LoginRequiredMixin,DetailView):
+    model = Portfolio
+    pk_url_kwarg = 'portfolio_id'
+    template_name = 'stocks/line_chart.html'
+    context_object_name = 'portfolio'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        portfolio = Portfolio.objects.get(pk=self.kwargs['portfolio_id'])
+        context['portfolio_id'] = portfolio.id
+        context['today'] = timezone.now().date().isoformat()
+        return context
 
 
 

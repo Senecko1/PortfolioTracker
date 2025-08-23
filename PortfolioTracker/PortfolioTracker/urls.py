@@ -12,6 +12,8 @@ from stocks.views import (
     TransactionCreateView,
     AllTransactionsView,
     HoldingsView,
+    PortfolioChartData,
+    LineChartView,
     TagAutocompleteView,
     StockAutocompleteView,
 )
@@ -29,6 +31,8 @@ urlpatterns = [
     path('portfolios/<int:portfolio_id>/transactions/add/', TransactionCreateView.as_view(), name='transaction'),
     path('portfolios/<int:portfolio_id>/transactions/', AllTransactionsView.as_view(), name='all-transactions'),
     path('portfolios/<int:portfolio_id>/holdings/', HoldingsView.as_view(), name='holdings'),
+    path('portfolios/<int:portfolio_id>/line-chart/data/', PortfolioChartData.as_view(), name='line-chart-data'),
+    path('portfolios/<int:portfolio_id>/line-chart/', LineChartView.as_view(), name='line-chart'),
 
 
 

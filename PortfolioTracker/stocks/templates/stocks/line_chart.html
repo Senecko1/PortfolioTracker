@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Line Chart{% endblock %}
+
+{% block content %}
+
+<h2>Value Line Chart last 365 days</h2>
+
+    <div class="chart-container">
+        <canvas id="portfolioLineChart" width="800" height="400"></canvas>
+    </div>
+
+
+    <script>
+    const CHART_DATA_URL = "{% url 'line-chart-data' portfolio.id %}";
+    </script>
+
+    <a href="{% url 'portfolio-details' portfolio.id %}">Back to Portfolios Details</a>
+{% endblock %}
