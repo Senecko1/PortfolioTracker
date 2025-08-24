@@ -203,7 +203,7 @@ class Transaction(models.Model):
 
     portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE)
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE)
-    transaction_date = models.DateField(help_text="YYYY-MM-DD")
+    transaction_date = models.DateField()
     quantity = models.PositiveIntegerField(validators=[MinValueValidator(1)])
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     fees = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
