@@ -14,8 +14,8 @@ from stocks.views import (
     HoldingsView,
     PortfolioChartData,
     LineChartView,
-    TagAutocompleteView,
-    StockAutocompleteView,
+    TickerAutocomplete,
+    TagAutocomplete,
 )
 
 urlpatterns = [
@@ -33,10 +33,6 @@ urlpatterns = [
     path('portfolios/<int:portfolio_id>/holdings/', HoldingsView.as_view(), name='holdings'),
     path('portfolios/<int:portfolio_id>/line-chart/data/', PortfolioChartData.as_view(), name='line-chart-data'),
     path('portfolios/<int:portfolio_id>/line-chart/', LineChartView.as_view(), name='line-chart'),
-
-
-
-
-    path('tag_autocomplete/', TagAutocompleteView.as_view(), name='tag-autocomplete'),
-    path('stock_autocomplete/', StockAutocompleteView.as_view(), name='stock-autocomplete'),
+    path('api/autocomplete/tickers/', TickerAutocomplete.as_view(), name='api-ticker-autocomplete'),
+    path('api/autocomplete/tags/', TagAutocomplete.as_view(), name='api-tag-autocomplete'),
 ]

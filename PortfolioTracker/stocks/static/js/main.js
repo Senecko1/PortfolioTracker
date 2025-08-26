@@ -2,126 +2,87 @@ document.addEventListener('DOMContentLoaded', () => {
     const openModal = id => {
         const modal = document.getElementById(id);
         if (!modal) return;
-            modal.style.display = 'block';
+        modal.classList.remove('hidden');
         if (id === 'stockModal') {
-            initializeStockAutocomplete();
-            initializeTagSelect();
-    }
+            initTickerAutocomplete();
+            initTagAutocomplete();
+        }
     };
 
-    const closeModal = modal => {
-    modal.style.display = 'none';
-    if (modal.id === 'stockModal') {
-        destroySelect2('#stock-symbol-input');
-        destroySelect2('#stock-tags-input');
-    }
-    };
+    const closeModal = modal => modal.classList.add('hidden');
 
     document.querySelectorAll('.open-modal-btn').forEach(btn =>
         btn.addEventListener('click', () => openModal(btn.dataset.target))
     );
-
     document.querySelectorAll('.modal-close').forEach(btn =>
         btn.addEventListener('click', () => closeModal(btn.closest('.modal')))
     );
-
     window.addEventListener('click', e => {
         if (e.target.classList.contains('modal')) {
             closeModal(e.target);
         }
     });
 
-    function initializeTagSelect() {
-        const $tagInput = $('#stock-tags-input');
-        if ($tagInput.length) {
-            if ($tagInput.hasClass('select2-hidden-accessible')) {
-                $tagInput.select2('destroy');
+    function initTickerAutocomplete() {
+        const input = document.getElementById('stock-input');
+        const list  = document.getElementById('ticker-suggestions');
+        input.addEventListener('input', () => {
+            const q = input.value.trim();
+            if (!q) {
+                list.innerHTML = '';
+                return list.classList.add('hidden');
             }
-            $tagInput.select2({
-                tags: true,
-                tokenSeparators: [','],
-                placeholder: 'Select your tags, e.g. Finance, Technology, etc.',
-                width: '100%',
-                ajax: {
-                    url: '/tag_autocomplete/',
-                    dataType: 'json',
-                    delay: 100,
-                    data: params => ({ q: params.term || '' }),
-                    processResults: data => ({ results: data.results || [] }),
-                    cache: true
-                },
-                createTag: params => ({
-                    id: params.term.trim(),
-                    text: params.term.trim(),
-                    newOption: true
-                }),
-                templateResult: data => data.loading
-                    ? 'Searching...'
-                    : (data.newOption
-                        ? $('<em>New tag: ' + data.text + '</em>')
-                        : data.text),
-                templateSelection: data => data.text,
-                language: {
-                    noResults: () => 'No results found',
-                    searching: () => 'Searching...',
-                    inputTooShort: () => 'Please enter at least 1 character'
-                }
-            });
-        }
+            fetch(`/api/autocomplete/tickers/?q=${encodeURIComponent(q)}`)
+                .then(res => res.json())
+                .then(data => {
+                    list.innerHTML = '';
+                    if (!data.length) return list.classList.add('hidden');
+                    data.forEach(item => {
+                        const li = document.createElement('li');
+                        li.textContent = item.label;
+                        li.dataset.ticker = item.ticker;
+                        li.className = 'px-2 py-1 hover:bg-indigo-700 cursor-pointer text-gray-100';
+                        li.addEventListener('click', () => {
+                            input.value = li.dataset.ticker;
+                            list.innerHTML = '';
+                            list.classList.add('hidden');
+                        });
+                        list.appendChild(li);
+                    });
+                    list.classList.remove('hidden');
+                });
+        });
     }
 
-
-    function initializeStockAutocomplete() {
-        const $stockInput = $('#stock-symbol-input');
-        if ($stockInput.hasClass('select2-hidden-accessible')) {
-            $stockInput.select2('destroy');
-        }
-        $stockInput.select2({
-            tags: true,
-            tokenSeparators: [','],
-            createTag: params => ({
-                id: params.term.toUpperCase(),
-                text: params.term.toUpperCase() + ' (new)',
-                newOption: true
-            }),
-            ajax: {
-                url: '/stock_autocomplete/',
-                dataType: 'json',
-                delay: 100,
-                data: params => ({ q: params.term || '' }),
-                processResults: data => ({ results: data.results || [] }),
-                cache: true
-            },
-            placeholder: 'Stock ticker symbol, e.g. AAPL',
-            minimumInputLength: 1,
-            width: '100%',
-            dropdownParent: $('#stockModal'),
-            allowClear: true,
-            closeOnSelect: true,
-            templateResult: data => {
-                if (data.loading) return 'Searching...';
-                if (data.newOption) return $('<em>New ticker: ‘' + data.id + '’</em>');
-                if (data.text.includes('–')) {
-                    const parts = data.text.split(' – ');
-                    return $('<div><strong>' + parts[0] + '</strong><br><small>' + parts.slice(1).join(' – ') + '</small></div>');
-                }
-                return data.text || data.id;
-            },
-            templateSelection: data => data.id || data.text,
-            language: {
-                noResults: () => 'No results found',
-                searching: () => 'Searching...',
-                inputTooShort: () => 'Please enter at least 1 character'
+    function initTagAutocomplete() {
+        const input = document.getElementById('tags-input');
+        const list  = document.getElementById('tags-suggestions');
+        input.addEventListener('input', () => {
+            const q = input.value.trim();
+            if (!q) {
+                list.innerHTML = '';
+                return list.classList.add('hidden');
             }
-        }).on('select2:select', e => {
-            $('#stock-symbol-input').val(e.params.data.id);
-        }).select2('open');
-    }
-
-    function destroySelect2(selector) {
-        const $el = $(selector);
-        if ($el.length && $el.hasClass('select2-hidden-accessible')) {
-            $el.select2('destroy');
-        }
+            fetch(`/api/autocomplete/tags/?q=${encodeURIComponent(q)}`)
+                .then(res => res.json())
+                .then(data => {
+                    list.innerHTML = '';
+                    if (!data.length) return list.classList.add('hidden');
+                    data.forEach(item => {
+                        const li = document.createElement('li');
+                        li.textContent = item.label;
+                        li.className = 'px-2 py-1 hover:bg-indigo-700 cursor-pointer text-gray-100';
+                        li.addEventListener('click', () => {
+                            const parts = input.value.split(',').map(s => s.trim()).filter(Boolean);
+                            if (!parts.includes(item.label)) parts.push(item.label);
+                            input.value = parts.join(', ');
+                            list.innerHTML = '';
+                            list.classList.add('hidden');
+                        });
+                        list.appendChild(li);
+                    });
+                    list.classList.remove('hidden');
+                });
+        });
     }
 });
