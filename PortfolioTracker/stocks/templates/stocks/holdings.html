@@ -4,15 +4,24 @@
 {% block title %}Holdings{% endblock %}
 
 {% block content %}
+    <h2 class="text-3xl font-semibold mb-6 text-gray-100">
+        Holdings
+    </h2>
 
-<h2>Holdings</h2>
+    {% if not holdings %}
+        <p class="text-gray-300 mb-6">
+            This portfolio has no holdings.
+        </p>
+    {% endif %}
 
-    <div style="max-width: 500px;margin: 0 auto;">
+    <div class="max-w-md mx-auto mb-8">
         <canvas id="holdingsChart"></canvas>
         {{ chart_labels|json_script:"chart-labels" }}
         {{ chart_values|json_script:"chart-values" }}
     </div>
 
-
-<a href="{% url 'portfolio-details' portfolio.id %}">Back to Portfolios Details</a>
+    <a href="{% url 'portfolio-details' portfolio.id %}"
+        class="text-indigo-400 hover:text-indigo-600 transition">
+        Back to Portfolios Details
+    </a>
 {% endblock %}

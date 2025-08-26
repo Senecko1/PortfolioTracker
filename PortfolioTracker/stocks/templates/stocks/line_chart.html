@@ -4,17 +4,20 @@
 {% block title %}Line Chart{% endblock %}
 
 {% block content %}
+    <h2 class="text-3xl font-semibold mb-6 text-gray-100">
+        Value Line Chart last 365 days
+    </h2>
 
-<h2>Value Line Chart last 365 days</h2>
-
-    <div class="chart-container">
-        <canvas id="portfolioLineChart" width="800" height="400"></canvas>
+    <div class="flex items-center justify-center">
+        <canvas id="portfolioLineChart" style="width: 100%; max-width: 1200px; height: 500px;"></canvas>
     </div>
 
-
     <script>
-    const CHART_DATA_URL = "{% url 'line-chart-data' portfolio.id %}";
+        const CHART_DATA_URL = "{% url 'line-chart-data' portfolio.id %}";
     </script>
 
-    <a href="{% url 'portfolio-details' portfolio.id %}">Back to Portfolios Details</a>
+    <a href="{% url 'portfolio-details' portfolio.id %}"
+        class="text-indigo-400 hover:text-indigo-600 transition">
+        Back to Portfolios Details
+    </a>
 {% endblock %}

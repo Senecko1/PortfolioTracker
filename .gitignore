@@ -3,3 +3,5 @@ __pycache__
 migrations
 poetry.lock
 pyproject.toml
+.django_tailwind_cli
+.ruff_cache

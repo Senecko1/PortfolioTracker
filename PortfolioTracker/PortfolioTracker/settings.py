@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'stocks',
+    'django_tailwind_cli',
 ]
 
 MIDDLEWARE = [
@@ -129,3 +130,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = 'user-portfolios'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+TAILWIND_CLI_SRC_CSS = "css/tailwind.css"
+TAILWIND_CLI_DIST_CSS = "css/style.css"

@@ -1,34 +1,42 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Portfolio Tracker{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'css/style.css' %}?v={% now 'U' %}">
-    <link rel="stylesheet" href="{% static 'css/select2.min.css' %}?v={% now 'U' %}">
-
-
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+        {% block title %}Portfolio Tracker{% endblock %}
+    </title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v={% now 'U' %}" />
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}?v={% now 'U' %}" />
 </head>
 
-<body>
-    <header>
-        {% if user.is_authenticated and portfolio_id %}
-            <nav>
-                <a href="{% url 'all-transactions' portfolio_id %}">All Transactions</a> |
-                <a href="{% url 'holdings' portfolio_id %}">Holdings</a> |
-                <a href="{% url 'line-chart' portfolio_id %}">Line Chart</a>
-            </nav>
-        {% endif %}
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
+
+    <header class="bg-gray-800 shadow-md py-4">
+        <div class="container mx-auto px-4">
+            {% if user.is_authenticated and portfolio_id %}
+                <nav class="flex justify-center space-x-6 text-indigo-400">
+                    <a href="{% url 'all-transactions' portfolio_id %}" class="hover:text-indigo-600 transition">
+                        All Transactions
+                    </a>
+                    <a href="{% url 'holdings' portfolio_id %}" class="hover:text-indigo-600 transition">
+                        Holdings
+                    </a>
+                    <a href="{% url 'line-chart' portfolio_id %}" class="hover:text-indigo-600 transition">
+                        Line Chart
+                    </a>
+                </nav>
+            {% endif %}
+        </div>
     </header>
 
-
-    <main>
+    <main class="flex-grow container mx-auto px-4 py-8">
         {% block content %}
         {% endblock %}
     </main>
 
-    <footer>
+    <footer class="bg-gray-900 text-gray-400 py-6 text-center text-sm select-none">
         {% block footer %}
             <p>&copy; 2025 Portfolio tracker | Jakub Sláma &#127936;</p>
         {% endblock %}
@@ -37,9 +45,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="{% static 'js/select2.min.js' %}"></script>
     <script src="{% static 'js/main.js' %}"></script>
     <script src="{% static 'js/doughnut_chart.js' %}"></script>
     <script src="{% static 'js/line_chart.js' %}"></script>
+
 </body>
 </html>
