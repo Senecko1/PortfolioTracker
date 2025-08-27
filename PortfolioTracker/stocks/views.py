@@ -12,7 +12,6 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import (
     CreateView,
-    DeleteView,
     DetailView,
     ListView,
 )
@@ -72,11 +71,12 @@ class UserPortfoliosView(LoginRequiredMixin, ListView):
         return context
 
 
-class PortfolioDetailView(LoginRequiredMixin, DetailView):
+class PortfolioDetailDeleteView(LoginRequiredMixin, DetailView):
     model = Portfolio
     pk_url_kwarg = "portfolio_id"
     template_name = "stocks/portfolio_details.html"
     context_object_name = "portfolio"
+    success_url = reverse_lazy("user-portfolios")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -86,11 +86,16 @@ class PortfolioDetailView(LoginRequiredMixin, DetailView):
         context["portfolio_id"] = self.object.id
         return context
 
-
-class PortfolioDeleteView(LoginRequiredMixin, DeleteView):
-    model = Portfolio
-    pk_url_kwarg = "portfolio_id"
-    success_url = reverse_lazy("user-portfolios")
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("action") == "delete":
+            portfolio = self.get_object()
+            portfolio.delete()
+            messages.success(
+                request, f'Portfolio "{portfolio.name}" was deleted successfully.'
+            )
+            return redirect(self.success_url)
+        else:
+            return super().get(request, *args, **kwargs)
 
 
 class AddStockView(LoginRequiredMixin, View):
