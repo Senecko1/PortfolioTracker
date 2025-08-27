@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'stocks',
     'django_tailwind_cli',
+    'django.contrib.humanize',
 ]
 
 MIDDLEWARE = [
