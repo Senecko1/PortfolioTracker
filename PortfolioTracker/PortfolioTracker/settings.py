@@ -128,6 +128,7 @@ STATICFILES_DIRS = [BASE_DIR / 'stocks' / 'static']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = 'user-portfolios'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
