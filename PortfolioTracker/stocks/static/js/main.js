@@ -23,36 +23,48 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    function initTickerAutocomplete() {
-        const input = document.getElementById('stock-input');
-        const list  = document.getElementById('ticker-suggestions');
-        input.addEventListener('input', () => {
-            const q = input.value.trim();
-            if (!q) {
+function initTickerAutocomplete() {
+    const input = document.getElementById('stock-input');
+    const list = document.getElementById('ticker-suggestions');
+
+    input.addEventListener('input', () => {
+        const q = input.value.trim();
+
+        if (!q) {
+            list.innerHTML = '';
+            return list.classList.add('hidden');
+        }
+
+        fetch(`/api/autocomplete/tickers/?q=${encodeURIComponent(q)}`)
+            .then(res => res.json())
+            .then(data => {
                 list.innerHTML = '';
-                return list.classList.add('hidden');
-            }
-            fetch(`/api/autocomplete/tickers/?q=${encodeURIComponent(q)}`)
-                .then(res => res.json())
-                .then(data => {
-                    list.innerHTML = '';
-                    if (!data.length) return list.classList.add('hidden');
-                    data.forEach(item => {
-                        const li = document.createElement('li');
-                        li.textContent = item.label;
-                        li.dataset.ticker = item.ticker;
-                        li.className = 'px-2 py-1 hover:bg-indigo-700 cursor-pointer text-gray-100';
-                        li.addEventListener('click', () => {
-                            input.value = li.dataset.ticker;
-                            list.innerHTML = '';
-                            list.classList.add('hidden');
-                        });
-                        list.appendChild(li);
+                if (!data.length) return list.classList.add('hidden');
+
+                data.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item.label;
+                    li.dataset.ticker = item.ticker;
+                    li.className = 'px-2 py-1 hover:bg-indigo-700 cursor-pointer text-gray-100';
+
+                    li.addEventListener('click', () => {
+                        input.value = li.dataset.ticker;
+                        list.innerHTML = '';
+                        list.classList.add('hidden');
                     });
-                    list.classList.remove('hidden');
+
+                    list.appendChild(li);
                 });
-        });
-    }
+
+                list.classList.remove('hidden');
+            })
+            .catch(() => {
+                list.innerHTML = '';
+                list.classList.add('hidden');
+            });
+    });
+}
+
 
     function initTagAutocomplete() {
         const input = document.getElementById('tags-input');
