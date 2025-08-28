@@ -1,6 +1,5 @@
 final
 __pycache__
-migrations
 poetry.lock
 pyproject.toml
 .django_tailwind_cli
