@@ -140,11 +140,32 @@ class Portfolio(models.Model):
         end_date = timezone.now().date()
         start_date = end_date - timedelta(days=days)
 
+        ticker_transaction_changes = self._aggregate_transactions(start_date, end_date)
+        if not ticker_transaction_changes:
+            return {"labels": [], "values": []}
+
+        ticker_list = list(ticker_transaction_changes.keys())
+        price_data_frame = self._fetch_price_data(ticker_list, start_date, end_date)
+        if price_data_frame.empty:
+            return {"labels": [], "values": []}
+
+        holdings_data_frame = self._calculate_daily_holdings(
+            ticker_transaction_changes, price_data_frame, start_date, end_date
+        )
+        portfolio_value_series = self._calculate_portfolio_value(
+            ticker_list, holdings_data_frame, price_data_frame
+        )
+
+        labels = [date.date().isoformat() for date in portfolio_value_series.index]
+        values = [round(value, 2) for value in portfolio_value_series.values]
+        return {"labels": labels, "values": values}
+
+    def _aggregate_transactions(self, start_date, end_date):
         all_transactions = Transaction.objects.filter(
             portfolio=self, transaction_date__lte=end_date
         ).order_by("transaction_date", "timestamp")
         if not all_transactions.exists():
-            return {"labels": [], "values": []}
+            return {}
 
         ticker_transaction_changes = {}
         for transaction in all_transactions:
@@ -157,32 +178,31 @@ class Portfolio(models.Model):
                 else -transaction.quantity
             )
             ticker_changes.append((transaction.transaction_date, quantity_change))
+        return ticker_transaction_changes
 
-        ticker_list = list(ticker_transaction_changes.keys())
-        price_data_frame = yf.download(
+    def _fetch_price_data(self, ticker_list, start_date, end_date):
+        return yf.download(
             tickers=ticker_list,
             start=start_date.isoformat(),
             end=(end_date + timedelta(days=1)).isoformat(),
             progress=False,
             group_by="ticker",
+            auto_adjust=False,
         )
-        if price_data_frame.empty:
-            return {"labels": [], "values": []}
 
+    def _calculate_daily_holdings(
+        self, ticker_transaction_changes, price_data_frame, start_date, end_date
+    ):
         holdings_data_frame = pd.DataFrame(index=price_data_frame.index)
-
         for ticker, transactions_for_ticker in ticker_transaction_changes.items():
             initial_quantity = sum(
                 change for date, change in transactions_for_ticker if date < start_date
             )
             relevant_events = sorted(
-                [
-                    (date, change)
-                    for date, change in transactions_for_ticker
-                    if start_date <= date <= end_date
-                ]
+                (date, change)
+                for date, change in transactions_for_ticker
+                if start_date <= date <= end_date
             )
-
             current_quantity = initial_quantity
             daily_quantities = []
             event_index = 0
@@ -197,22 +217,36 @@ class Portfolio(models.Model):
             holdings_data_frame[ticker] = pd.Series(
                 daily_quantities, index=price_data_frame.index
             )
+        return holdings_data_frame
 
+    def _calculate_portfolio_value(
+        self, ticker_list, holdings_data_frame, price_data_frame
+    ):
         portfolio_value_series = pd.Series(0.0, index=price_data_frame.index)
         for ticker in ticker_list:
-            close_prices = (
-                price_data_frame[ticker]["Close"]
-                if len(ticker_list) > 1
-                else price_data_frame["Close"]
-            )
+            if isinstance(price_data_frame.columns, pd.MultiIndex):
+                if ticker in price_data_frame.columns.levels[0]:
+                    close_prices = price_data_frame[ticker].get("Close")
+                    if close_prices is None:
+                        close_prices = price_data_frame[ticker].get("Adj Close")
+                    if close_prices is None:
+                        raise ValueError(
+                            f"No 'Close' or 'Adj Close' column for ticker {ticker}"
+                        )
+                else:
+                    raise ValueError(f"Ticker {ticker} not found in price data columns")
+            else:
+                if "Close" in price_data_frame.columns:
+                    close_prices = price_data_frame["Close"]
+                elif "Adj Close" in price_data_frame.columns:
+                    close_prices = price_data_frame["Adj Close"]
+                else:
+                    raise ValueError("No 'Close' or 'Adj Close' column in price data")
+
             portfolio_value_series += holdings_data_frame[ticker].astype(
                 float
             ) * close_prices.astype(float)
-
-        labels = [date.date().isoformat() for date in portfolio_value_series.index]
-        values = [round(value, 2) for value in portfolio_value_series.values]
-
-        return {"labels": labels, "values": values}
+        return portfolio_value_series
 
 
 class Holding(models.Model):
