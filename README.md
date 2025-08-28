@@ -63,6 +63,7 @@ PortfolioTracker/
 │   ├── management/
 │   │   └── commands/
 │   │       └── seed.py
+│   ├── migrations/
 │   ├── static/
 │   │   ├── css/
 │   │   │   ├── custom.css
@@ -120,7 +121,7 @@ PortfolioTracker/
    python manage.py migrate
    ```
 
-6. **Load demo data (recommended for first run):**
+6. Load demo data (recommended for first run):
 
    ```bash
    python manage.py seeds
@@ -145,7 +146,7 @@ PortfolioTracker/
    http://localhost:8000
    ```
 
-9. **Use the demo account to explore:**
+9. Use the demo account to explore:
    - Username: `demo_user`
    - Password: `demo1234`
 
@@ -179,7 +180,7 @@ To reset and reload demo data:
 ```bash
 python manage.py flush      # Deletes all data
 python manage.py migrate    # Reapply migrations
-python manage.py seeds       # Reload demo data
+python manage.py seeds      # Reload demo data
 ```
 
 ### Custom Data
@@ -209,7 +210,7 @@ Register a new user via the registration form and start adding your own portfoli
 ## User Guide
 
 - Home page links to login or registration.
-- **Quick access via demo account:** `demo_user` / `demo1234`
+- Quick access via demo account: `demo_user` / `demo1234`
 - After login, view your portfolios list.
 - Create new portfolios using the provided form.
 - Add new stock with ticker autocomplete.
@@ -245,5 +246,5 @@ MIT License — free to use and modify with attribution.
 ## Contact & Further Information
 
 For questions or collaboration, contact the project author.
-GitHub: Senecko1
-Email: slamajakub@email.cz
+- **GitHub:** Senecko1
+- **Email:** slamajakub@email.cz
