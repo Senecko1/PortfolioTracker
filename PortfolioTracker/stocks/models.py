@@ -14,6 +14,8 @@ from .config import (
 
 
 class Tag(models.Model):
+    """Model representing a tag for categorizing stocks."""
+
     name = models.CharField(max_length=50, unique=True)
 
     class Meta:
@@ -21,10 +23,13 @@ class Tag(models.Model):
         verbose_name_plural = "Tags"
 
     def __str__(self):
+        """String representation for tag."""
         return self.name
 
 
 class Stock(models.Model):
+    """Model representing a financial stock."""
+
     ticker = models.CharField(
         max_length=10, unique=True, help_text="Stock ticker symbol, e.g. AAPL"
     )
@@ -40,9 +45,16 @@ class Stock(models.Model):
         ordering = ["ticker"]
 
     def __str__(self):
+        """String representation for stock."""
         return f"{self.ticker} ({self.name})" if self.name else self.ticker
 
     def fetch_current_price(self):
+        """
+        Fetches the latest price for the stock using yfinance.
+
+        Returns:
+            float or None: The last fetched price or previously stored price if fetching fails.
+        """
         try:
             ticker = yf.Ticker(self.ticker)
             price = ticker.fast_info.last_price
@@ -50,10 +62,13 @@ class Stock(models.Model):
             self.save(update_fields=["last_price", "last_update"])
             return price
         except Exception:
+            # If fetching fails, fallback to previously saved price
             return self.last_price
 
 
 class Portfolio(models.Model):
+    """Model representing an investment portfolio owned by a user."""
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     created = models.DateTimeField(auto_now_add=True)
@@ -68,9 +83,16 @@ class Portfolio(models.Model):
         ]
 
     def __str__(self):
+        """String representation for portfolio."""
         return f"{self.name} ({self.user.username})"
 
     def get_holdings_with_prices(self):
+        """
+        Returns a list of holdings with up-to-date prices and associated profit/loss info.
+
+        Returns:
+            list: List of dicts with holding, price, value, currency, gain/loss.
+        """
         holdings = Holding.objects.filter(portfolio=self).select_related("stock")
         holdings_with_prices = []
         cutoff = timezone.now() - timedelta(minutes=PRICE_REFRESH_DELTA_MINUTES)
@@ -78,6 +100,7 @@ class Portfolio(models.Model):
         for holding in holdings:
             stock = holding.stock
             if not stock.last_price or stock.last_update < cutoff:
+                # Refresh price if outdated
                 stock.fetch_current_price()
 
             current_price = stock.last_price
@@ -113,6 +136,12 @@ class Portfolio(models.Model):
         return holdings_with_prices
 
     def get_portfolio_summary(self):
+        """
+        Computes an overview of the portfolio including total value, cost, and gain/loss.
+
+        Returns:
+            dict: Portfolio summary statistics.
+        """
         holdings_with_prices = self.get_holdings_with_prices()
 
         total_value = 0
@@ -137,6 +166,15 @@ class Portfolio(models.Model):
         }
 
     def get_time_series(self, days=365):
+        """
+        Returns a time series of portfolio value for given period.
+
+        Args:
+            days (int): Number of days of history to return.
+
+        Returns:
+            dict: Dictionary with 'labels' (dates) and 'values' (portfolio values).
+        """
         end_date = timezone.now().date()
         start_date = end_date - timedelta(days=days)
 
@@ -161,6 +199,16 @@ class Portfolio(models.Model):
         return {"labels": labels, "values": values}
 
     def _aggregate_transactions(self, start_date, end_date):
+        """
+        Aggregates transactions and computes net change in holdings per ticker.
+
+        Args:
+            start_date (date): Start date for aggregation.
+            end_date (date): End date for aggregation.
+
+        Returns:
+            dict: Mapping of ticker to list of (date, quantity change).
+        """
         all_transactions = Transaction.objects.filter(
             portfolio=self, transaction_date__lte=end_date
         ).order_by("transaction_date", "timestamp")
@@ -181,6 +229,17 @@ class Portfolio(models.Model):
         return ticker_transaction_changes
 
     def _fetch_price_data(self, ticker_list, start_date, end_date):
+        """
+        Downloads historical price data for given tickers and date range.
+
+        Args:
+            ticker_list (list): List of stock tickers.
+            start_date (date): Start date.
+            end_date (date): End date.
+
+        Returns:
+            pd.DataFrame: DataFrame with price info.
+        """
         return yf.download(
             tickers=ticker_list,
             start=start_date.isoformat(),
@@ -193,8 +252,21 @@ class Portfolio(models.Model):
     def _calculate_daily_holdings(
         self, ticker_transaction_changes, price_data_frame, start_date, end_date
     ):
+        """
+        Builds a DataFrame with daily holdings for each ticker.
+
+        Args:
+            ticker_transaction_changes (dict): Ticker to transaction events.
+            price_data_frame (pd.DataFrame): DataFrame with price dates.
+            start_date (date): Start date.
+            end_date (date): End date.
+
+        Returns:
+            pd.DataFrame: DataFrame with daily holdings quantities.
+        """
         holdings_data_frame = pd.DataFrame(index=price_data_frame.index)
         for ticker, transactions_for_ticker in ticker_transaction_changes.items():
+            # Compute initial quantity held before start_date
             initial_quantity = sum(
                 change for date, change in transactions_for_ticker if date < start_date
             )
@@ -222,8 +294,20 @@ class Portfolio(models.Model):
     def _calculate_portfolio_value(
         self, ticker_list, holdings_data_frame, price_data_frame
     ):
+        """
+        Multiplies daily holdings by daily prices to get overall portfolio value.
+
+        Args:
+            ticker_list (list): List of tickers.
+            holdings_data_frame (pd.DataFrame): Daily quantities held.
+            price_data_frame (pd.DataFrame): Daily prices.
+
+        Returns:
+            pd.Series: Time series of portfolio values.
+        """
         portfolio_value_series = pd.Series(0.0, index=price_data_frame.index)
         for ticker in ticker_list:
+            # Handle MultiIndex for ticker data
             if isinstance(price_data_frame.columns, pd.MultiIndex):
                 if ticker in price_data_frame.columns.levels[0]:
                     close_prices = price_data_frame[ticker].get("Close")
@@ -250,6 +334,8 @@ class Portfolio(models.Model):
 
 
 class Holding(models.Model):
+    """Model representing a holding of a stock in a portfolio."""
+
     portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE)
     stock = models.ForeignKey(Stock, on_delete=models.PROTECT)
     quantity = models.PositiveIntegerField(validators=[MinValueValidator(1)])
@@ -261,13 +347,25 @@ class Holding(models.Model):
         ordering = ["stock__ticker"]
 
     def __str__(self):
+        """String representation for holding."""
         return f"{self.quantity} × {self.stock.ticker}"
 
     def current_value(self, current_price):
+        """
+        Returns the current value of the holding given current price.
+
+        Args:
+            current_price (float): Current market price.
+
+        Returns:
+            float: Current value of holding.
+        """
         return self.quantity * current_price
 
 
 class Transaction(models.Model):
+    """Model representing a portfolio transaction (buy/sell/order)."""
+
     TRANSACTION_TYPES = TRANSACTION_TYPES
 
     portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE)
@@ -285,6 +383,7 @@ class Transaction(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
+        """String representation for transaction."""
         return f"{self.transaction_type} {self.quantity}×{self.stock.ticker}"
 
     class Meta:
