@@ -7,9 +7,19 @@ from stocks.models import Holding, Portfolio, Stock, Transaction
 
 
 class Command(BaseCommand):
+    """
+    Django management command to seed initial demo data for portfolio,
+    including demo user, portfolio, stocks, transactions, and holdings.
+    """
+
     help = "Seed initial data for demo portfolio with stock purchases and holdings"
 
     def handle(self, *args, **options):
+        """
+        Command entry point: creates demo user, portfolio, stocks, transactions,
+        and updates holdings with averaged buy prices.
+        """
+        # Create demo user if not present
         user, created = User.objects.get_or_create(username="demo_user")
         if created:
             user.set_password("demo1234")
@@ -20,6 +30,7 @@ class Command(BaseCommand):
                 )
             )
 
+        # Create demo portfolio for user if not present
         portfolio, created = Portfolio.objects.get_or_create(
             user=user,
             name="Demo portfolio",
@@ -28,6 +39,7 @@ class Command(BaseCommand):
         if created:
             self.stdout.write(self.style.SUCCESS("Created demo portfolio"))
 
+        # Define demo stock data
         stocks_data = [
             {"ticker": "AAPL", "name": "Apple Inc.", "currency": "$"},
             {"ticker": "MSFT", "name": "Microsoft Corporation", "currency": "$"},
@@ -37,8 +49,10 @@ class Command(BaseCommand):
             {"ticker": "META", "name": "Meta Platforms, Inc.", "currency": "$"},
             {"ticker": "PFE", "name": "Pfizer Inc. ", "currency": "$"},
         ]
+
         stocks = []
         for stock_data in stocks_data:
+            # Get or create each stock instance
             stock, created = Stock.objects.get_or_create(
                 ticker=stock_data["ticker"],
                 defaults={
@@ -48,17 +62,19 @@ class Command(BaseCommand):
             )
             stocks.append(stock)
 
+        # Define demo transaction data for portfolio
         transactions_data = [
             {
-                "stock": stocks[0],
+                "stock": stocks[0],  # AAPL
                 "transaction_date": date(2024, 6, 24),
                 "quantity": 14,
                 "price": Decimal("208.63"),
                 "fees": Decimal("1.00"),
                 "transaction_type": "BUY",
             },
+            # Additional transactions...
             {
-                "stock": stocks[1],
+                "stock": stocks[1],  # MSFT
                 "transaction_date": date(2024, 2, 19),
                 "quantity": 8,
                 "price": Decimal("409.87"),
@@ -66,7 +82,7 @@ class Command(BaseCommand):
                 "transaction_type": "BUY",
             },
             {
-                "stock": stocks[2],
+                "stock": stocks[2],  # TSLA
                 "transaction_date": date(2024, 7, 10),
                 "quantity": 13,
                 "price": Decimal("284.02"),
@@ -74,7 +90,7 @@ class Command(BaseCommand):
                 "transaction_type": "BUY",
             },
             {
-                "stock": stocks[0],
+                "stock": stocks[0],  # AAPL again
                 "transaction_date": date(2024, 8, 5),
                 "quantity": 7,
                 "price": Decimal("196.32"),
@@ -82,7 +98,7 @@ class Command(BaseCommand):
                 "transaction_type": "BUY",
             },
             {
-                "stock": stocks[3],
+                "stock": stocks[3],  # GOOGL
                 "transaction_date": date(2024, 5, 13),
                 "quantity": 21,
                 "price": Decimal("167.24"),
@@ -90,7 +106,7 @@ class Command(BaseCommand):
                 "transaction_type": "BUY",
             },
             {
-                "stock": stocks[4],
+                "stock": stocks[4],  # AMZN
                 "transaction_date": date(2024, 7, 1),
                 "quantity": 16,
                 "price": Decimal("200.32"),
@@ -98,7 +114,7 @@ class Command(BaseCommand):
                 "transaction_type": "BUY",
             },
             {
-                "stock": stocks[5],
+                "stock": stocks[5],  # META
                 "transaction_date": date(2024, 6, 24),
                 "quantity": 5,
                 "price": Decimal("521.92"),
@@ -106,7 +122,7 @@ class Command(BaseCommand):
                 "transaction_type": "BUY",
             },
             {
-                "stock": stocks[1],
+                "stock": stocks[1],  # MSFT again
                 "transaction_date": date(2024, 6, 24),
                 "quantity": 6,
                 "price": Decimal("455.10"),
@@ -114,7 +130,7 @@ class Command(BaseCommand):
                 "transaction_type": "BUY",
             },
             {
-                "stock": stocks[6],
+                "stock": stocks[6],  # PFE
                 "transaction_date": date(2024, 7, 22),
                 "quantity": 112,
                 "price": Decimal("30.74"),
@@ -124,6 +140,7 @@ class Command(BaseCommand):
         ]
 
         for tx_data in transactions_data:
+            # Create transaction record or get existing
             transaction, created = Transaction.objects.get_or_create(
                 portfolio=portfolio,
                 stock=tx_data["stock"],
@@ -134,6 +151,7 @@ class Command(BaseCommand):
                 transaction_type=tx_data["transaction_type"],
             )
 
+            # Get or create holding for the stock in portfolio
             holding, _ = Holding.objects.get_or_create(
                 portfolio=portfolio,
                 stock=tx_data["stock"],
@@ -144,11 +162,13 @@ class Command(BaseCommand):
                 },
             )
 
+            # Calculate new average buy price based on existing and new purchase
             total_old_value = holding.quantity * float(holding.buy_price)
             total_new_value = tx_data["quantity"] * float(tx_data["price"])
             new_quantity = holding.quantity + tx_data["quantity"]
             new_avg_price = (total_old_value + total_new_value) / new_quantity
 
+            # Update holding with new quantity, average buy price, and buy date from latest transaction
             holding.quantity = new_quantity
             holding.buy_price = round(new_avg_price, 2)
             holding.buy_date = tx_data["transaction_date"]
