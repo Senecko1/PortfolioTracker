@@ -20,8 +20,19 @@
         {{ chart_values|json_script:"chart-values" }}
     </div>
 
-    <a href="{% url 'portfolio-details' portfolio.id %}"
-        class="text-indigo-400 hover:text-indigo-600 transition">
-        Back to Portfolios Details
-    </a>
+    <div class="flex w-full">
+        <div class="mt-8">
+            <a href="{% url 'portfolio-details' portfolio.id %}" class="text-indigo-400 hover:text-indigo-600 transition">
+                Back to Portfolios Details
+            </a>
+        </div>
+
+        <form method="post" action="{% url 'logout' %}" class="ml-auto">
+            {% csrf_token %}
+            <button type="submit"
+                class="bg-red-600 hover:bg-red-700 text-white font-semibold rounded-md mt-4 px-5 py-2">
+                Log Out
+            </button>
+        </form>
+    </div>
 {% endblock %}

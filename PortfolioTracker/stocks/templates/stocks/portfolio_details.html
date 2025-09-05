@@ -142,7 +142,7 @@
             </tbody>
         </table>
 
-        <div class="mt-6 space-x-4">
+        <div class="mt-6 flex justify-between items-center w-full">
             <form method="get" action="{% url 'transaction' portfolio.id %}" class="inline-block">
                 <button
                     type="submit"
@@ -151,6 +151,7 @@
                 </button>
             </form>
 
+        <div class="flex space-x-4">
             {% if portfolio %}
                 <form method="post" action="{% url 'portfolio-details' portfolio.id %}" class="inline-block">
                     {% csrf_token %}
@@ -163,6 +164,15 @@
                     </button>
                 </form>
             {% endif %}
+
+                <form method="post" action="{% url 'logout' %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit"
+                        class="bg-red-600 hover:bg-red-700 text-white font-semibold rounded-md px-5 py-2 transition">
+                        Log Out
+                    </button>
+                </form>
+            </div>
         </div>
 
         <div class="mt-8">
