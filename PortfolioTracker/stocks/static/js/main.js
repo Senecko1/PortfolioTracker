@@ -85,9 +85,7 @@ function initTickerAutocomplete() {
                         li.textContent = item.label;
                         li.className = 'px-2 py-1 hover:bg-indigo-700 cursor-pointer text-gray-100';
                         li.addEventListener('click', () => {
-                            const parts = input.value.split(',').map(s => s.trim()).filter(Boolean);
-                            if (!parts.includes(item.label)) parts.push(item.label);
-                            input.value = parts.join(', ');
+                            input.value = item.label;
                             list.innerHTML = '';
                             list.classList.add('hidden');
                         });
